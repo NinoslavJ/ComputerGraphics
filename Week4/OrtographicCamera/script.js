@@ -61,12 +61,6 @@ renderer.setSize(sizes.width,sizes.height);
 document.getElementById("scene").appendChild(renderer.domElement);
 
 
-function limitXDistance()
-{
-    while(cylinder.position.x!=52)
-        cylinder.position.x += 0.02;
-}
-
 const animate = () => {
     requestAnimationFrame(animate);
     cylinder.position.x+=0.02

@@ -47,7 +47,6 @@ const sizes = {
     height: 600
 }
 
-const orthoCamera = new THREE.OrthographicCamera(-10, 10, 10, -10, 0, 100);
 
 const camera = new THREE.PerspectiveCamera(75, 800 / 600);
 camera.position.z = 10;
