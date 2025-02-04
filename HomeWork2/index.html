@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device initial-scale=1.0">
+    <title>Virtual Classroom</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.145.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.145.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.145.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.145.0/examples/js/loaders/TextureLoader.js"></script>
+
+    <script>
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+    
+        // Ambient light for general lighting
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.6); // Softer ambient light for subtle room lighting
+        scene.add(ambientLight);
+
+        // Overhead ceiling light 
+        const ceilingLight = new THREE.PointLight(0xffffff, 1.5, 30); // Adjust intensity and distance for more illumination
+        ceilingLight.position.set(0, 10, 0); // Positioned in the middle of the ceiling
+        ceilingLight.castShadow = true;
+        scene.add(ceilingLight);
+
+        // Directional light 
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        directionalLight.position.set(5, 10, 5); // Simulate sunlight direction
+        directionalLight.castShadow = true; // Enable shadows
+        scene.add(directionalLight);
+
+        // Load texture for the walls
+        const textureLoader = new THREE.TextureLoader();
+        const wallTexture = textureLoader.load('textures/walls.jpg'); // Load the walls texture
+
+        // Apply the wall texture to each side of the room
+        const wallMaterial = new THREE.MeshStandardMaterial({ 
+            map: wallTexture, 
+            side: THREE.DoubleSide // Ensure the texture appears on both sides of the walls
+        });
+
+        // Create the classroom box (walls, floor, ceiling) 
+        const roomGeometry = new THREE.BoxGeometry(40, 15, 40); 
+        const roomMaterial = new THREE.MeshBasicMaterial({
+            color: 0xffffff,  // White color for walls
+            wireframe: true,  // Wireframe mode for edges
+            transparent: true, // Make walls transparent
+            opacity: 0.5  // Set opacity to make it semi-transparent
+        });
+        const room = new THREE.Mesh(roomGeometry, roomMaterial);
+        scene.add(room);
+
+        // Left Wall
+        const leftWall = new THREE.Mesh(new THREE.PlaneGeometry(40, 15), wallMaterial);
+        leftWall.position.set(-20, 0, 0); // Position the left wall
+        leftWall.rotation.y = Math.PI / 2;
+        scene.add(leftWall);
+
+        // Right Wall
+        const rightWall = new THREE.Mesh(new THREE.PlaneGeometry(40, 15), wallMaterial);
+        rightWall.position.set(20, 0, 0); // Position the right wall
+        rightWall.rotation.y = Math.PI / 2;
+        scene.add(rightWall);
+
+        // Front Wall (opposite to the blackboard)
+        const frontWall = new THREE.Mesh(new THREE.PlaneGeometry(40, 15), wallMaterial);
+        frontWall.position.set(0, 0, 20); // Position the front wall
+        scene.add(frontWall);
+
+        // Back Wall (where the blackboard will be placed)
+        const backWall = new THREE.Mesh(new THREE.PlaneGeometry(40, 15), wallMaterial);
+        backWall.position.set(0, 0, -20); // Position the back wall
+        scene.add(backWall);
+
+        // Load floor texture
+        const floorTexture = textureLoader.load('textures/floor.jpg');
+
+        // Set texture to repeat across the floor
+        floorTexture.wrapS = THREE.RepeatWrapping;
+        floorTexture.wrapT = THREE.RepeatWrapping;
+        floorTexture.repeat.set(4, 4); // Adjust this to change tiling size
+
+        // Apply texture to the floor material
+        const floorMaterial = new THREE.MeshStandardMaterial({ 
+            map: floorTexture 
+        });
+
+        // Create the floor with the texture
+        const floorGeometry = new THREE.PlaneGeometry(40, 40);
+        const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+        floor.rotation.x = - Math.PI / 2; // Rotate to lie flat
+        floor.position.y = -7.5; // Position at the bottom of the box
+        scene.add(floor);
+
+        const ceilingGeometry = new THREE.PlaneGeometry(40, 40); 
+        const ceilingMaterial = new THREE.MeshStandardMaterial({ color: 0x40E0D0 }); 
+        const ceiling = new THREE.Mesh(ceilingGeometry, ceilingMaterial);
+        ceiling.rotation.x = Math.PI / 2; 
+        ceiling.position.y = 7.5; 
+        scene.add(ceiling);
+
+       // Load window texture (sky background)
+       const windowTexture = textureLoader.load('textures/sky1.jpg');
+
+        // Glass Material for Windows (Transparent effect)
+        const glassMaterial = new THREE.MeshPhysicalMaterial({
+            map: windowTexture,
+            transparent: true,
+            opacity: 0.9,
+            roughness: 0.1,
+            metalness: 0.3
+        });
+
+        const loader = new THREE.GLTFLoader();
+
+        // Load and apply the material to the window model
+        loader.load('models/window/window.gltf', (gltf) => {
+            const windowModel = gltf.scene;
+            windowModel.scale.set(5, 5, 5);
+            windowModel.position.set(-20, -2, 0);
+            windowModel.rotation.y = Math.PI / 2;
+
+            // Apply texture material to all window meshes
+            windowModel.traverse((child) => {
+                if (child.isMesh) {
+                    child.material = glassMaterial;
+                }
+            });
+
+            scene.add(windowModel);
+
+            // Clone for second window
+            const windowModel2 = windowModel.clone();
+            windowModel2.position.set(-20, -2, 5);
+            scene.add(windowModel2);
+        });
+                
+
+        // Create a white blackboard
+        const blackboardGeometry = new THREE.PlaneGeometry(12, 5); // Blackboard size
+        const blackboardMaterial = new THREE.MeshLambertMaterial({ color: 0xffffff }); // White color for the blackboard
+        const blackboard = new THREE.Mesh(blackboardGeometry, blackboardMaterial);
+        blackboard.position.set(0, 2, 19); // Position at the front of the classroom
+        blackboard.rotation.y = Math.PI; // Rotate to face the classroom
+        scene.add(blackboard);
+
+        let deskModel, chairModel;
+
+        // Load desk model
+        loader.load('/models/school_desk_new/desk.gltf', (gltf) => {
+            deskModel = gltf.scene;
+            deskModel.scale.set(0.008, 0.008, 0.008); // Adjust scale for desk
+
+            // Load chair model
+            loader.load('/models/school_chair/chair.gltf', (gltfChair) => {
+                chairModel = gltfChair.scene;
+                chairModel.scale.set(0.05, 0.05, 0.05); // Adjust scale for chair
+
+                // Position each desk and chair with spacing between chairs
+                const desk1 = deskModel.clone();
+                desk1.position.set(-6, -7.5, -3);
+                desk1.rotation.y = Math.PI; // Rotate desk to face the blackboard
+                scene.add(desk1);
+
+                const chair1 = chairModel.clone();
+                chair1.position.set(-10, -7.5, -5); // Move chair slightly away from desk
+                chair1.rotation.y += Math.PI*2; // Rotate chair to face the blackboard
+                scene.add(chair1);
+    
+
+                const chair2 = chairModel.clone();
+                chair2.position.set(-7, -7.5, -5); // Move chair slightly away from desk
+                chair2.rotation.y = Math.PI*2; // Rotate chair to face the blackboard
+                scene.add(chair2);
+
+                const desk2 = deskModel.clone();
+                desk2.position.set(6, -7.5, -3);
+                desk2.rotation.y = Math.PI; // Rotate desk to face the blackboard
+                scene.add(desk2);
+
+                const chair3 = chairModel.clone();
+                chair3.position.set(2, -7.5, -5); // Move chair slightly away from desk
+                chair3.rotation.y = Math.PI*2; // Rotate chair to face the blackboard
+                scene.add(chair3);
+
+                const chair4 = chairModel.clone();
+                chair4.position.set(5, -7.5, -5); // Move chair slightly away from desk
+                chair4.rotation.y = Math.PI*2; // Rotate chair to face the blackboard
+                scene.add(chair4);
+
+                // Second row (newly added)
+                const desk3 = deskModel.clone();
+                desk3.position.set(-6, -7.5, 10); // Move desk further along the z-axis
+                desk3.rotation.y = Math.PI;
+                scene.add(desk3);
+
+                const chair5 = chairModel.clone();
+                chair5.position.set(-10, -7.5, 8); // Move chair further along the z-axis
+                chair5.rotation.y = Math.PI*2;
+                scene.add(chair5);
+
+                const chair6 = chairModel.clone();
+                chair6.position.set(-7, -7.5, 8); // Move chair further along the z-axis
+                chair6.rotation.y = Math.PI*2;
+                scene.add(chair6);
+
+                const desk4 = deskModel.clone();
+                desk4.position.set(6, -7.5, 10); // Move desk further along the z-axis
+                desk4.rotation.y = Math.PI;
+                scene.add(desk4);
+
+                const chair7 = chairModel.clone();
+                chair7.position.set(2, -7.5, 8); // Move chair further along the z-axis
+                chair7.rotation.y = Math.PI*2;
+                scene.add(chair7);
+
+                const chair8 = chairModel.clone();
+                chair8.position.set(5, -7.5, 8); // Move chair further along the z-axis
+                chair8.rotation.y = Math.PI*2;
+                scene.add(chair8);
+
+
+            });
+        });
+
+        // Set the camera position to match the uploaded screenshot
+        camera.position.set(-25, 15, 25);  
+        camera.lookAt(0, 0, 0);  // Ensure the camera is looking at the center of the classroom
+
+
+
+        window.addEventListener('resize', () => {
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update(); 
+            renderer.render(scene, camera);
+        }
+
+        animate();
+    </script>
+</body>
+</html>
