@@ -14,6 +14,8 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.145.0/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.145.0/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.145.0/examples/js/loaders/TextureLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.145.0/examples/js/loaders/OBJLoader.js"></script>
+
 
     <script>
         const scene = new THREE.Scene();
@@ -122,6 +124,19 @@
             roughness: 0.1,
             metalness: 0.3
         });
+
+        const objLoader = new THREE.OBJLoader();
+
+        objLoader.load('models/door.obj', (object) => {
+            object.scale.set(5, 5, 5); 
+
+            object.position.set(0, -7, -20);  
+            object.rotation.y = Math.PI;  
+
+            // Add to scene
+            scene.add(object);
+        });
+
 
         const loader = new THREE.GLTFLoader();
 
@@ -235,7 +250,6 @@
             });
         });
 
-        // Set the camera position to match the uploaded screenshot
         camera.position.set(-25, 15, 25);  
         camera.lookAt(0, 0, 0);  // Ensure the camera is looking at the center of the classroom
 
