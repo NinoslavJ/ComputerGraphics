@@ -30,7 +30,9 @@
         // Ambient light for general lighting
         const ambientLight = new THREE.AmbientLight(0x404040, 0.6); // Softer ambient light for subtle room lighting
         scene.add(ambientLight);
-
+   // Load texture for the walls
+        const textureLoader = new THREE.TextureLoader();
+        const wallTexture = textureLoader.load('textures/wall.jpeg'); // Load the walls texture
         // Overhead ceiling light 
         const ceilingLight = new THREE.PointLight(0xffffff, 1.5, 30); // Adjust intensity and distance for more illumination
         ceilingLight.position.set(0, 10, 0); // Positioned in the middle of the ceiling
@@ -43,9 +45,7 @@
         directionalLight.castShadow = true; // Enable shadows
         scene.add(directionalLight);
 
-        // Load texture for the walls
-        const textureLoader = new THREE.TextureLoader();
-        const wallTexture = textureLoader.load('textures/walls.jpg'); // Load the walls texture
+     
 
         // Apply the wall texture to each side of the room
         const wallMaterial = new THREE.MeshStandardMaterial({ 
@@ -107,7 +107,7 @@
         scene.add(floor);
 
         const ceilingGeometry = new THREE.PlaneGeometry(40, 40); 
-        const ceilingMaterial = new THREE.MeshStandardMaterial({ color: 0x40E0D0 }); 
+        const ceilingMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, map:wallTexture }); 
         const ceiling = new THREE.Mesh(ceilingGeometry, ceilingMaterial);
         ceiling.rotation.x = Math.PI / 2; 
         ceiling.position.y = 7.5; 
@@ -250,9 +250,8 @@
             });
         });
 
-        camera.position.set(-25, 15, 25);  
+        camera.position.set(25, 15, 5);  
         camera.lookAt(0, 0, 0);  // Ensure the camera is looking at the center of the classroom
-
 
 
         window.addEventListener('resize', () => {
